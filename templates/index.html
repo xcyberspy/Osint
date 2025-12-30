@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OSINT Analyzer BY XCYBERSPY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://unpkg.com/vis-network/styles/vis-network.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%); color:#fff; min-height:100vh; }
+body::before { content:''; position:fixed; top:0; left:0; right:0; bottom:0; background: radial-gradient(circle at 20% 50%, rgba(255,152,0,0.05) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(108,207,255,0.05) 0%, transparent 50%); pointer-events:none; z-index:-1; }
+.container { max-width:1400px; padding:20px; }
+h2, h4 { font-family:'Space Mono', monospace; font-weight:700; letter-spacing:0.5px; }
+.navbar-osint { background: linear-gradient(90deg, rgba(15,15,30,0.95) 0%, rgba(26,26,46,0.95) 100%); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,152,0,0.2); padding: 16px; margin-bottom: 24px; border-radius: 12px; }
+.navbar-osint h1 { margin:0; font-size:50px; background:linear-gradient(90deg, #ff9800, #ffb74d); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.subtitle { color:#9ca3af; font-size:2Opx; letter-spacing:1px; text-transform:uppercase; }
+#searchForm { background: linear-gradient(135deg, rgba(26,26,46,0.8) 0%, rgba(31,47,61,0.6) 100%); backdrop-filter: blur(10px); border: 1px solid rgba(255,152,0,0.2); padding: 20px !important; border-radius: 12px !important; margin-top: 0 !important; }
+.input-group { display:flex; gap:12px; align-items:stretch; }
+.input-group input { background: rgba(255,255,255,0.08) !important; border: 1px solid rgba(255,152,0,0.3) !important; color:#fff !important; border-radius:8px !important; padding: 12px 16px !important; }
+.input-group input[type="number"] { max-width:90px; padding: 12px 8px !important; }
+.input-group input::placeholder { color:rgba(255,255,255,0.4) !important; }
+.input-group input:focus { background: rgba(255,255,255,0.12) !important; border-color: #ff9800 !important; box-shadow: 0 0 12px rgba(255,152,0,0.3) !important; }
+.btn-warning { background: linear-gradient(90deg, #ff9800, #ffb74d) !important; border:none !important; color:#000 !important; font-weight:600 !important; border-radius:8px !important; padding: 12px 24px !important; transition: all 0.3s ease !important; min-width:120px; }
+.btn-warning:hover { transform:translateY(-2px) !important; box-shadow: 0 8px 20px rgba(255,152,0,0.4) !important; }
+#resultMap { border: 1px solid rgba(255,152,0,0.2); height:700px; margin-top:24px; background: linear-gradient(135deg, rgba(30,30,46,0.9) 0%, rgba(20,20,35,0.9) 100%); border-radius:12px; backdrop-filter: blur(5px); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+#results { background: linear-gradient(135deg, rgba(26,26,46,0.8) 0%, rgba(20,20,35,0.8) 100%); border: 1px solid rgba(255,152,0,0.15); padding:16px !important; border-radius:10px !important; max-height:400px; overflow-y:auto; color:#eee; font-size:14px; backdrop-filter: blur(5px); }
+#results::-webkit-scrollbar { width:6px; }
+#results::-webkit-scrollbar-track { background:transparent; }
+#results::-webkit-scrollbar-thumb { background:rgba(255,152,0,0.4); border-radius:3px; }
+#results::-webkit-scrollbar-thumb:hover { background:rgba(255,152,0,0.6); }
+.result-card { background: linear-gradient(135deg, rgba(40,40,60,0.8) 0%, rgba(30,30,50,0.8) 100%); border: 1px solid rgba(255,152,0,0.15); padding:12px !important; margin-bottom:12px !important; border-radius:10px !important; display:flex; align-items:center; gap:12px; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); cursor:pointer; }
+.result-card:hover { transform: translateY(-4px); border-color: rgba(255,152,0,0.5); box-shadow: 0 12px 32px rgba(255,152,0,0.2); background: linear-gradient(135deg, rgba(50,50,80,0.9) 0%, rgba(40,40,65,0.9) 100%); }
+.result-card img { width:56px; height:56px; border-radius:8px; object-fit:cover; border: 2px solid rgba(255,152,0,0.3); transition: transform 0.3s ease; }
+.result-card:hover img { transform:scale(1.05); }
+.result-card .info { flex:1; }
+.result-card .info .title { font-weight:600; color:#ffb74d; font-size:14px; margin-bottom:4px; }
+.result-card .info .link { font-size:11px; color:#6cf; word-break:break-all; opacity:0.8; }
+.result-card .info .type { font-size:11px; color:#fff; background: linear-gradient(135deg, rgba(255,152,0,0.3), rgba(255,152,0,0.1)); border: 1px solid rgba(255,152,0,0.4); padding:4px 8px; border-radius:6px; margin-top:6px; display:inline-block; font-weight:500; }
+.result-card button { background: linear-gradient(135deg, #ff9800, #ffb74d); border:none; color:#000; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-size:12px; transition: all 0.2s ease; }
+.result-card button:hover { transform:scale(1.05); box-shadow: 0 4px 12px rgba(255,152,0,0.4); }
+.tooltip-custom { position:absolute; background:rgba(0,0,0,0.95); color:#fff; padding:12px 16px; border-radius:8px; max-width:350px; font-size:13px; display:none; z-index:1000; box-shadow: 0 8px 24px rgba(255,152,0,0.3); border: 1px solid rgba(255,152,0,0.3); border-left: 3px solid #ff9800; }
+.results-section { background: linear-gradient(135deg, rgba(26,26,46,0.8) 0%, rgba(31,47,61,0.6) 100%); border: 1px solid rgba(255,152,0,0.2); backdrop-filter: blur(5px); padding: 20px !important; border-radius: 12px !important; margin-top: 24px !important; }
+.results-section h4 { color:#ffb74d; margin-bottom:16px; }
+.zoom-controls { position:absolute; top:16px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:100; }
+.zoom-btn { background: linear-gradient(135deg, #ff9800, #ffb74d); border:none; color:#000; width:40px; height:40px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:700; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(255,152,0,0.3); display:flex; align-items:center; justify-content:center; }
+.zoom-btn:hover { transform:scale(1.1); box-shadow: 0 6px 16px rgba(255,152,0,0.5); }
+.zoom-btn:active { transform:scale(0.95); }
+#resultMapContainer { position:relative; }
+#loadingOverlay { position:fixed; inset:0; background: rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:9999; backdrop-filter: blur(4px); }
+.spinner-box { background: linear-gradient(135deg, #0f1724, #1f2937); padding: 32px 40px; border-radius: 12px; display: flex; gap: 16px; align-items: center; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 1px solid rgba(255,152,0,0.3); }
+@media (max-width:768px){ .container { padding:12px; } #resultMap { height:400px; } #results { max-height:250px; } .input-group { flex-direction:column; } .btn-warning { width:100%; } }
+</style>
+</head>
+<body>
+<div id="loadingOverlay">
+    <div class="spinner-box">
+        <div class="spinner-border text-warning" role="status"></div>
+        <div>
+            <div style="color:#fff;font-weight:600;font-size:16px">Searching…</div>
+            <div style="color:#9ca3af;font-size:12px;margin-top:4px">Please wait while results are being fetched</div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="navbar-osint">
+        <h1> 👁 OSINT Analyzer 👁</h1>
+        <div class="subtitle">by xcyberspy</div>
+    </div>
+
+    <form id="searchForm">
+        <div class="input-group">
+            <input type="text" id="queryInput" class="form-control" placeholder="Enter a name, domain or company..." required>
+            <input type="number" id="numPagesInput" class="form-control" placeholder="Pages" min="1" max="10" value="1" style="max-width:90px;">
+            <button class="btn btn-warning" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        </div>
+    </form>
+
+    <div id="resultMapContainer" style="position:relative;">
+        <div class="zoom-controls">
+            <button id="zoomInBtn" class="zoom-btn" title="Zoom In">+</button>
+            <button id="zoomOutBtn" class="zoom-btn" title="Zoom Out">−</button>
+            <button id="resetBtn" class="zoom-btn" title="Reset View" style="font-size:12px;padding:0;">↺</button>
+        </div>
+        <div id="resultMap"></div>
+    </div>
+
+    <div class="results-section">
+        <h4><i class="fa-solid fa-list"></i> Result Details</h4>
+        <div id="results"></div>
+    </div>
+</div>
+
+<div id="tooltip" class="tooltip-custom"></div>
+
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script>
+const tooltip = document.getElementById("tooltip");
+const loadingOverlay = document.getElementById("loadingOverlay");
+let network = null;
+
+
+window.addEventListener('DOMContentLoaded', function() {
+    const cachedQuery = localStorage.getItem('lastQuery');
+    const cachedNumPages = localStorage.getItem('lastNumPages');
+    const cachedResults = localStorage.getItem('lastResults');
+    
+    
+    const numInput = document.getElementById("numPagesInput");
+    if(numInput && cachedNumPages) {
+        numInput.value = cachedNumPages;
+    }
+    
+    if(cachedQuery && cachedResults) {
+        try {
+            const data = JSON.parse(cachedResults);
+            document.getElementById("queryInput").value = cachedQuery;
+            renderResults(data);
+            renderGraph(data, cachedQuery);
+        } catch(err) {
+            console.error('Error loading cached results:', err);
+        }
+    }
+});
+
+document.getElementById("searchForm").onsubmit = async function(e){
+    e.preventDefault();
+    const query = document.getElementById("queryInput").value.trim();
+    const numPagesInput = document.getElementById("numPagesInput");
+    const numPages = numPagesInput ? (parseInt(numPagesInput.value) || 1) : 1;
+    
+    if(!query) {
+        alert('Please enter a search query');
+        return;
+    }
+    
+    loadingOverlay.style.display = "flex";
+    
+    try {
+        let form = new FormData();
+        form.append("query", query);
+        form.append("num_pages", numPages);
+
+        console.log("Sending search:", { query, num_pages: numPages });
+        
+        const res = await fetch("/search", { method:"POST", body:form });
+        if(!res.ok) throw new Error(`Server error: ${res.status}`);
+        
+        const data = await res.json();
+        console.log(`Received ${data.length} results`);
+
+       
+        localStorage.setItem('lastQuery', query);
+        localStorage.setItem('lastNumPages', numPages);
+        localStorage.setItem('lastResults', JSON.stringify(data));
+
+        renderResults(data);
+        renderGraph(data, query);
+    } catch(err) {
+        alert('An error occurred while searching: ' + err.message);
+        console.error(err);
+    } finally {
+        loadingOverlay.style.display = "none";
+    }
+}
+
+function renderResults(data){
+    const container = document.getElementById("results");
+    container.innerHTML = "";
+
+    const types = {};
+    data.forEach(result=>{
+        if(!types[result.type]) types[result.type]=[];
+        types[result.type].push(result);
+    });
+
+    for(const type in types){
+        types[type].forEach(result=>{
+            const card = document.createElement("div");
+            card.className = "result-card";
+
+            const img = document.createElement("img");
+            img.src = result.image || "https://cdn-icons-png.flaticon.com/512/565/565547.png";
+            img.onerror = ()=> img.src = 'https://cdn-icons-png.flaticon.com/512/565/565547.png';
+
+            const info = document.createElement("div");
+            info.className = "info";
+            info.innerHTML = `
+                <div class="title">${result.title}</div>
+                <div class="link">${result.link}</div>
+                <div class="type">${result.type}</div>
+            `;
+
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.textContent = "Open";
+            btn.onclick = (e)=>{ e.preventDefault(); window.open(result.link, '_blank'); };
+
+            card.appendChild(img);
+            card.appendChild(info);
+            card.appendChild(btn);
+            container.appendChild(card);
+        });
+    }
+}
+
+function renderGraph(data, queryName){
+    
+    if(!data || data.length === 0){
+        document.getElementById("resultMap").innerHTML =
+        "<h3 class='text-center mt-5 text-danger'>No mapping results found</h3>";
+        return;
+    }
+
+   
+    data = data.map(r=>{
+        if(!r.type || r.type === "" || r.type === null) r.type = "Websites";
+        return r;
+    });
+
+    let nodes = [], edges = [], nid=2;
+
+    nodes.push({
+        id:1,
+        label: queryName,
+        shape:"box",
+        color:"#ffc107",
+        font:{color:"#000", size:18},
+        title:"Search Results"
+    });
+
+    const typeGroups = {};
+    data.forEach(r=>{
+        if(!typeGroups[r.type]) typeGroups[r.type] = [];
+        typeGroups[r.type].push(r);
+    });
+
+    const icons = {
+        "Twitter":["#1DA1F2","https://cdn-icons-png.flaticon.com/512/733/733579.png"],
+        "Facebook":["#4267B2","https://cdn-icons-png.flaticon.com/512/733/733547.png"],
+        "Instagram":["#E1306C","https://cdn-icons-png.flaticon.com/512/2111/2111463.png"],
+        "YouTube":["#FF0000","https://cdn-icons-png.flaticon.com/512/1384/1384060.png"],
+        "Telegram":["#0088cc","https://cdn-icons-png.flaticon.com/512/2111/2111646.png"],
+        "LinkedIn":["#0077B5","https://cdn-icons-png.flaticon.com/512/174/174857.png"],
+        "WhatsApp":["#25D366","https://cdn-icons-png.flaticon.com/512/733/733585.png"],
+        "GitHub":["#333","https://cdn-icons-png.flaticon.com/512/733/733553.png"],
+        "Reddit":["#FF4500","https://cdn-icons-png.flaticon.com/512/2111/2111581.png"],
+        "Medium":["#00ab6c","https://cdn-icons-png.flaticon.com/512/2111/2111504.png"],
+        "StackOverflow":["#f48024","https://cdn-icons-png.flaticon.com/512/2111/2111628.png"],
+        "Pinterest":["#bd081c","https://cdn-icons-png.flaticon.com/512/2111/2111432.png"],
+        "TikTok":["#69C9D0","https://cdn-icons-png.flaticon.com/512/3046/3046121.png"],
+        "Websites":["#6cf","https://cdn-icons-png.flaticon.com/512/565/565547.png"],
+        "Emails":["#FF9800","https://cdn-icons-png.flaticon.com/512/561/561127.png"],
+        "Phone Numbers":["#4CAF50","https://cdn-icons-png.flaticon.com/512/15/15874.png"]
+    };
+
+    for(const type in typeGroups){
+        let typeId = nid++;
+        let [color, icon] = icons[type] || ["#6cf","https://cdn-icons-png.flaticon.com/512/565/565547.png"];
+
+        nodes.push({
+            id:typeId,
+            label:type,
+            shape:"image",
+            image:icon,
+            font:{color:"#fff"},
+            title:`Category: ${type}`
+        });
+        edges.push({from:1, to:typeId, arrows:{to:{enabled:true, scaleFactor:2}}, smooth:true, length:350});
+
+        typeGroups[type].forEach(result=>{
+            let id = nid++;
+            nodes.push({
+                id,
+                label: result.title,
+                shape:"image",
+                image: result.image || icon,
+                font:{color:"#fff"},
+                title:`${result.title}\n${result.link}\nType: ${result.type}`
+            });
+            edges.push({from:typeId, to:id, arrows:{to:{enabled:true}}, dashes:true, smooth:{type:'cubicBezier'}, length:200});
+        });
+    }
+
+    const container = document.getElementById("resultMap");
+    network = new vis.Network(container, {nodes:new vis.DataSet(nodes), edges:new vis.DataSet(edges)}, {
+        physics:{
+            enabled:true,
+            barnesHut:{gravitationalConstant:-8000, centralGravity:0.3, springLength:300, springConstant:0.04, damping:0.09},
+        },
+        interaction:{hover:true, zoomView:true, dragView:true}
+    });
+
+    network.on("hoverNode", function(params){
+        const node = network.body.data.nodes.get(params.node);
+        tooltip.innerHTML = node.title || node.label;
+        tooltip.style.display = "block";
+        tooltip.style.left = (params.event.pageX + 10) + "px";
+        tooltip.style.top  = (params.event.pageY + 10) + "px";
+    });
+    network.on("blurNode",()=> tooltip.style.display="none");
+    
+    document.getElementById("zoomInBtn").onclick = ()=> {
+        const scale = network.getScale();
+        network.moveTo({ scale: scale * 1.2, animation: { duration: 300 } });
+    };
+    document.getElementById("zoomOutBtn").onclick = ()=> {
+        const scale = network.getScale();
+        network.moveTo({ scale: scale / 1.2, animation: { duration: 300 } });
+    };
+    document.getElementById("resetBtn").onclick = ()=> network.fit({ animation: { duration: 500 } });
+}
+
+
+if(document.getElementById("zoomInBtn")) {
+    document.getElementById("zoomInBtn").onclick = ()=> network && (() => {
+        const scale = network.getScale();
+        network.moveTo({ scale: scale * 1.2, animation: { duration: 300 } });
+    })();
+    document.getElementById("zoomOutBtn").onclick = ()=> network && (() => {
+        const scale = network.getScale();
+        network.moveTo({ scale: scale / 1.2, animation: { duration: 300 } });
+    })();
+    document.getElementById("resetBtn").onclick = ()=> network && network.fit({ animation: { duration: 500 } });
+}
+</script>
+</body>
+</html>
